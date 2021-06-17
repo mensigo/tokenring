@@ -1,49 +1,37 @@
 package ring;
 
 import node.Node;
-import node.NodeRoutine;
 import node.NodeImpl;
+import node.NodeRoutine;
 import token.Token;
-import medium.Medium;
+import token.TokenImpl;
+import transporter.Transporter;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TokenRingImpl implements TokenRing {
-    private final int size;
     private final List<Thread> nodeThreads;
 
-    public TokenRingImpl(int size, List<Thread> nodeThreads) {
-        this.size = size;
+    public TokenRingImpl(List<Thread> nodeThreads) {
         this.nodeThreads = nodeThreads;
     }
 
-    public static TokenRingImpl factory(List<Medium> mediums) {
-        int ringSize = mediums.size();
+    public static TokenRingImpl factory(List<Transporter> transporters, int N, int P, boolean verbose) {
         Consumer<Token> tokenConsumer = token -> {};
-        List<Node> nodes = mediums.stream()
-                .map(m -> new NodeImpl(m, tokenConsumer))
-                // .peek(n -> System.out.println("Node@idx=" + n.getRingIndex() + " has been created."))
-                .collect(Collectors.toList());
-        // System.out.println("---");
-        List<Thread> nodeRoutineThreads = nodes.stream()
-                .map(n -> {
-                    int prevId = getPrevRingIndex(n.getRingIndex(), ringSize);
-                    return new NodeRoutine(n, mediums.get(prevId));
-                })
-                // .peek(nr -> System.out.println(
-                //        "Node@idx=" + nr.getNode().getRingIndex()
-                //        + " is listening to node@idx=" + getPrevRingIndex(nr.getNode().getRingIndex(), ringSize) + "."))
-                .map(Thread::new)
-                .collect(Collectors.toList());
-        // System.out.println("---");
-        return new TokenRingImpl(ringSize, nodeRoutineThreads);
-    }
+        List<Node> nodes = createNodes(transporters, tokenConsumer, N, P, verbose);
+        if (verbose) {
+            System.out.println("---");
+        }
 
-    @Override
-    public int size() {
-        return size;
+        List<Thread> nodeRoutineThreads = createNodeRoutineThreads(nodes, transporters, N, verbose);
+        if (verbose) {
+            System.out.println("---");
+        }
+
+        return new TokenRingImpl(nodeRoutineThreads);
     }
 
     @Override
@@ -65,7 +53,45 @@ public class TokenRingImpl implements TokenRing {
                 });
     }
 
-    private static int getPrevRingIndex(int i, int count) {
-        return (i - 1 + count) % count;
+    public static int getNextRingIndex(int ringIndex, int ringSize) {
+        return (ringIndex +1) % ringSize;
+    }
+
+    public static int getPrevRingIndex(int ringIndex, int ringSize) {
+        return (ringIndex - 1 + ringSize) % ringSize;
+    }
+
+    private static List<Node> createNodes(List<Transporter> transporters,
+                                          Consumer<Token> tokenConsumer,
+                                          int N, int P, boolean verbose) {
+        return IntStream.range(0, N)
+                .boxed()
+                .map(i -> {
+                    int destIndex = i;
+                    List<Token> initTokensList = IntStream.range(0, P / N)
+                            .boxed()
+                            .map(j -> new TokenImpl(destIndex))
+                            .collect(Collectors.toList());
+                    Transporter pushTransporter = transporters.get(destIndex);
+                    return new NodeImpl(pushTransporter, tokenConsumer, N);
+                })
+                .peek(n -> { if (verbose) System.out.println("Node@idx=" + n.getRingIndex() + " has been created."); })
+                .collect(Collectors.toList());
+    }
+
+    private static List<Thread> createNodeRoutineThreads(List<Node> nodes,
+                                                         List<Transporter> transporters,
+                                                         int N, boolean verbose) {
+        return nodes.stream()
+                .map(n -> {
+                    int prevId = getPrevRingIndex(n.getRingIndex(), N);
+                    Transporter pollTransporter = transporters.get(prevId);
+                    return new NodeRoutine(n, pollTransporter);
+                })
+                .peek(nr -> {
+                    if (verbose) System.out.println("NodeRoutine@idx=" + nr.getNode().getRingIndex() + " has been created.");
+                })
+                .map(Thread::new)
+                .collect(Collectors.toList());
     }
 }

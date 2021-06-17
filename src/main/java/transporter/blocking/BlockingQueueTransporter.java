@@ -1,15 +1,16 @@
-package medium.buffer;
+package transporter.blocking;
 
 import token.Token;
+import transporter.Transporter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-public class BlockingQueueBufferedTokenMedium implements BufferedTokenMedium {
+public class BlockingQueueTransporter implements Transporter {
     private final BlockingQueue<Token> blockingQueue;
 
-    public BlockingQueueBufferedTokenMedium(BlockingQueue<Token> blockingQueue) {
+    public BlockingQueueTransporter(BlockingQueue<Token> blockingQueue) {
         this.blockingQueue = blockingQueue;
     }
 

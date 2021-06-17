@@ -1,6 +1,7 @@
-package medium.buffer;
+package transporter.needblocking;
 
 import token.Token;
+import transporter.Transporter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,13 +10,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class LockBasedQueueBufferedTokenMedium implements BufferedTokenMedium {
+public class LockBasedQueueModTransporter implements Transporter {
     private final Queue<Token> queue;
-
     private final Lock lock = new ReentrantLock();
     private final Condition notEmpty = lock.newCondition();
 
-    public LockBasedQueueBufferedTokenMedium(Queue<Token> queue) {
+    public LockBasedQueueModTransporter(Queue<Token> queue) {
         this.queue = queue;
     }
 
@@ -26,14 +26,16 @@ public class LockBasedQueueBufferedTokenMedium implements BufferedTokenMedium {
 
     @Override
     public void push(Token token) throws InterruptedException {
-        lock.lock();
         try {
+            lock.lock();
             boolean added;
             do {
                 added = queue.add(token);
             } while (!added);
-            notEmpty.signal();
-            // idea: signal only if queue was empty
+            if (queue.size() == 1) {
+                // idea: signal only if queue was empty
+                notEmpty.signal();
+            }
         } finally {
             lock.unlock();
         }

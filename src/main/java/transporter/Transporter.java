@@ -1,8 +1,11 @@
-package medium;
+package transporter;
 
 import token.Token;
 
-public interface Medium {
+import java.util.List;
+
+public interface Transporter {
     void push(Token token) throws InterruptedException;
     Token poll() throws InterruptedException;
+    List<Token> getTokens();
 }
