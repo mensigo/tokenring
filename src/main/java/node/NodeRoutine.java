@@ -1,15 +1,19 @@
 package node;
 
 import token.Token;
-import medium.Medium;
+import transporter.Transporter;
 
 public class NodeRoutine implements Runnable {
     private final Node node;
-    private final Medium medium;
+    private final Transporter pollTransporter;
 
-    public NodeRoutine(Node node, Medium medium) {
+    public NodeRoutine(Node node, Transporter pollTransporter) {
         this.node = node;
-        this.medium = medium;
+        this.pollTransporter = pollTransporter;
+    }
+
+    public Node getNode() {
+        return node;
     }
 
     @Override
@@ -24,7 +28,7 @@ public class NodeRoutine implements Runnable {
 
     private void job() throws InterruptedException {
         while (!Thread.currentThread().isInterrupted()) {
-            Token token = medium.poll();
+            Token token = pollTransporter.poll();
             node.receive(token);
         }
     }

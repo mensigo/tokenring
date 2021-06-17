@@ -1,29 +1,21 @@
 package token;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class TokenImpl implements Token {
-    private long destinationIndex;
-    private final LinkedHashMap<Long, Integer> marksMap;
-    private final int ringSize;
-
+    private int destinationIndex;
     private final long tokenId;
+
+    private long sentTimestamp;
+    private long deliveredTimestamp;
+
+    private boolean isSent;
+    private boolean isDelivered;
+
     private static long tokenCounter;
 
-    public TokenImpl(long destinationIndex, int ringSize) {
+    public TokenImpl(int destinationIndex) {
         this.destinationIndex = destinationIndex;
-        marksMap = new LinkedHashMap<>();
-        this.ringSize = ringSize;
         tokenId = tokenCounter;
         tokenCounter++;
-    }
-
-    @Override
-    public boolean isDelivered() {
-        // print
-        // System.out.println(marksMap.size() + " " +  ringSize + " ");
-        return marksMap.size() == ringSize;
     }
 
     @Override
@@ -32,23 +24,39 @@ public class TokenImpl implements Token {
     }
 
     @Override
-    public long getDestinationIndex() {
+    public int getDestinationIndex() {
         return destinationIndex;
     }
 
     @Override
-    public void setDestinationIndex(long index) {
-        destinationIndex = index;
+    public boolean isSent() {
+        return isSent;
     }
 
     @Override
-    public Map<Long, Integer> getMarks() {
-        return marksMap;
+    public boolean isDelivered() {
+        return isDelivered;
     }
 
     @Override
-    public void addMark(int ringIndex) {
-        long mark = System.nanoTime();
-        marksMap.put(mark, ringIndex);
+    public long getSentTime() {
+        return sentTimestamp;
+    }
+
+    @Override
+    public long getDeliveredTime() {
+        return deliveredTimestamp;
+    }
+
+    @Override
+    public void markAsSent() {
+        sentTimestamp = System.nanoTime();
+        isSent = true;
+    }
+
+    @Override
+    public void markAsDelivered() {
+        deliveredTimestamp = System.nanoTime();
+        isDelivered = true;
     }
 }

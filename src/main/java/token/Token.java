@@ -1,14 +1,26 @@
 package token;
 
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public interface Token {
     long getId();
-    long getDestinationIndex();
-    void setDestinationIndex(long index);
+    int getDestinationIndex();
 
+    boolean isSent();
     boolean isDelivered();
 
-    Map<Long, Integer> getMarks();
-    void addMark(int ringIndex);
+    long getSentTime();
+    long getDeliveredTime();
+
+    void markAsSent();
+    void markAsDelivered();
+
+    static List<Token> createTokensList(int destIndex, int tokensNum) {
+        return IntStream.range(0, tokensNum)
+                .boxed()
+                .map(i -> new TokenImpl(destIndex))
+                .collect(Collectors.toList());
+    }
 }

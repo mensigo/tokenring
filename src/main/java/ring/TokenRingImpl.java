@@ -73,7 +73,7 @@ public class TokenRingImpl implements TokenRing {
                             .map(j -> new TokenImpl(destIndex))
                             .collect(Collectors.toList());
                     Transporter pushTransporter = transporters.get(destIndex);
-                    return new NodeImpl(pushTransporter, tokenConsumer, N);
+                    return new NodeImpl(pushTransporter, tokenConsumer);
                 })
                 .peek(n -> { if (verbose) System.out.println("Node@idx=" + n.getRingIndex() + " has been created."); })
                 .collect(Collectors.toList());
